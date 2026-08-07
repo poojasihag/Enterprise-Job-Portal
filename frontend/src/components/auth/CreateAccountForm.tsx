@@ -1,10 +1,12 @@
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { Eye } from "lucide-react";
-
+import { registerUser } from "../../lib/api/auth";
 
 type Inputs = {
-  example: string;
-  exampleRequired: string;
+  fullname: string;
+  email: string;
+  password: string;
+  role: "CANDIDATE" | "RECRUITER";
 };
 type CreateProps = {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
@@ -16,9 +18,17 @@ export default function CreateAccountForm({ setIsLogin }: CreateProps) {
     watch,
     formState: { errors },
   } = useForm<Inputs>();
-  const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data);
+  // const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data);
+  const onSubmit: SubmitHandler<Inputs> = async (data) => {
+    try {
+      const response = await registerUser(data);
 
-  console.log(watch("example")); // watch input value by passing its name
+      console.log(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  console.log(watch("fullname")); // watch input value by passing its name
 
   return (
     <form
@@ -37,8 +47,8 @@ export default function CreateAccountForm({ setIsLogin }: CreateProps) {
           type="text"
           className="w-60 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
           // className="h-8 bg-white w-60  border-0 border-gray-400 shadow-2xl rounded-md"
+          {...register("fullname", { required: "Full name is required" })}
           placeholder="Full Name"
-          {...register("example")}
         />
       </div>
       <div className="">
@@ -52,8 +62,8 @@ export default function CreateAccountForm({ setIsLogin }: CreateProps) {
           type="email"
           className="w-60 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
           // className="h-8 bg-white w-60  border-0 border-gray-400 shadow-2xl rounded-md"
-          placeholder="@Email"
-          {...register("example")}
+          {...register("email", { required: "Email is required" })}
+          placeholder="Email"
         />
       </div>
 
@@ -66,6 +76,7 @@ export default function CreateAccountForm({ setIsLogin }: CreateProps) {
         <div className="relative">
           <input
             type="password"
+            {...register("password", { required: "Password is required" })}
             placeholder="••••••••"
             className="w-60 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
@@ -77,7 +88,15 @@ export default function CreateAccountForm({ setIsLogin }: CreateProps) {
         </div>
       </div>
       {/* errors will return when field validation fails  */}
-      {errors.exampleRequired && <span>This field is required</span>}
+      {errors.fullname && (
+        <span className="text-sm text-red-600">{errors.fullname.message}</span>
+      )}
+      {errors.email && (
+        <span className="text-sm text-red-600">{errors.email.message}</span>
+      )}
+      {errors.password && (
+        <span className="text-sm text-red-600">{errors.password.message}</span>
+      )}
 
       <input
         // className="h-8 bg-blue-300 hover:bg-blue-400 w-60 border-0 border-gray-400 shadow-2xl rounded-md"
