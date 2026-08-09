@@ -1,9 +1,10 @@
-import axios from "axios";
+import api from "./axios";
 
-const api = axios.create({
-    baseURL: "http://localhost:5000/api"
-});
 
+
+export const loginApi = (data: any) => {
+  return api.post("/users/login", data);
+}; 
 export const registerUser = (data:any)=>{
-    return api.post("/users/register",data);
-}
+  return api.post("/users/create",data);
+};

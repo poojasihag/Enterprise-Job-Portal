@@ -2,7 +2,7 @@
 
 import type { Request, Response } from "express";
 import * as usersService from "./users.service.ts";
-import { createUserSchema } from "./users.validation.ts";
+import { createUserSchema,   loginUserSchema } from "./users.validation.ts";
 
 
 
@@ -25,43 +25,35 @@ export const create = async (req: Request, res: Response) => {
 
   return res.status(201).json(user);
 };
+export const login = async (req: Request, res: Response) => {
+  try {
+    const result = loginUserSchema.safeParse(req.body);
 
-// export const create = async (
-//   req: Request,
-//   res: Response
-// ) => {
+    if (!result.success) {
+      return res.status(400).json({
+        message: "Validation Failed",
+        errors: result.error.issues,
+      });
+    }
 
-//     try {
-        
-//         const {data, error}= createUserSchema.safeParse(req.body)
-//          console.log(data);
-// } catch(error){
-//   if(error instanceof z.ZodError){
-//     console.log("error",error);
-//     res.redirect( "/getAll")
-//     error.issues; 
-//     /* [
-//       {
-//         expected: 'string',
-//         code: 'invalid_type',
-//         path: [ 'username' ],
-//         message: 'Invalid input: expected string'
-//       },
-//       {
-//         expected: 'number',
-//         code: 'invalid_type',
-//         path: [ 'xp' ],
-//         message: 'Invalid input: expected number'
-//       }
-//     ] */
-//   }
-// }
-//     console.log(req.body)
-//     // res.status
-//   const user = await usersService.create(req.body);
+    const { email, password } = result.data;
 
-//   res.status(201).json(user);
-// };
+    const resultLogin = await usersService.login(email, password);
+
+    return res.status(200).json({
+      message: "Login successful",
+      ...resultLogin,
+    });
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
+
+    return res.status(401).json({
+      message: "Invalid email or password",
+    });
+  }
+};
+
+
 export const getAll = async (
   req: Request,
   res: Response

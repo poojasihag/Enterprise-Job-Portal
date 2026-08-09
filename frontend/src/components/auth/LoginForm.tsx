@@ -1,11 +1,12 @@
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { Eye } from "lucide-react";
-
+import { loginApi } from "../../lib/api/auth";
 
 type Inputs = {
-  example: string;
-  exampleRequired: string;
+  email: string;
+  password: string;
 };
+
 type LoginProps = {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
 };
@@ -17,34 +18,50 @@ export default function LoginForm({ setIsLogin }: LoginProps) {
     watch,
     formState: { errors },
   } = useForm<Inputs>();
-  const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data);
 
-  console.log(watch("example")); // watch input value by passing its name
+  const onSubmit: SubmitHandler<Inputs> = async (data) => {
+  try {
+    const response = await loginApi(data);
+
+    console.log("LOGIN SUCCESS:", response.data);
+
+    const token = response.data.token;
+
+    localStorage.setItem("token", token);
+  } catch (error: any) {
+    console.log("LOGIN ERROR:", error.response?.data);
+  }
+};
+
+  console.log(watch("email"));
 
   return (
-    <form
-      className="my-10 flex flex-col h-70 w-full gap-7 items-center"
-      onSubmit={handleSubmit(onSubmit)}
-    >
-      {/* register your input into the hook by invoking the "register" function */}
-
-      <div className="">
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div>
         <label
           htmlFor="email"
           className="mb-2 block text-sm font-medium text-gray-700"
         >
           Work Email
         </label>
+
         <input
+          id="email"
           type="email"
           className="w-60 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-          // className="h-8 bg-white w-60  border-0 border-gray-400 shadow-2xl rounded-md"
           placeholder="@Email"
-          {...register("example")}
+          {...register("email", {
+            required: "Email is required",
+          })}
         />
+
+        {errors.email && (
+          <span className="text-sm text-red-600">
+            {errors.email.message}
+          </span>
+        )}
       </div>
 
-      {/* include validation with required or other standard HTML validation rules */}
       <div className="mb-5">
         <label className="mb-2 block text-sm font-medium text-gray-700">
           Security Password
@@ -55,6 +72,9 @@ export default function LoginForm({ setIsLogin }: LoginProps) {
             type="password"
             placeholder="••••••••"
             className="w-60 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            {...register("password", {
+              required: "Password is required",
+            })}
           />
 
           <Eye
@@ -62,20 +82,27 @@ export default function LoginForm({ setIsLogin }: LoginProps) {
             className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400"
           />
         </div>
+
+        {errors.password && (
+          <span className="text-sm text-red-600">
+            {errors.password.message}
+          </span>
+        )}
       </div>
-      {/* errors will return when field validation fails  */}
-      {errors.exampleRequired && <span>This field is required</span>}
 
       <input
-        // className="h-8 bg-blue-300 hover:bg-blue-400 w-60 border-0 border-gray-400 shadow-2xl rounded-md"
-        className="w-60 rounded-xl border border-gray-300 bg-blue-300 hover:bg-blue-400 px-4 py-3 text-sm  focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        className="w-60 rounded-xl border border-gray-300 bg-blue-300 px-4 py-3 text-sm hover:bg-blue-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
         type="submit"
+        value="Login"
       />
+
       <div className="flex flex-row">
         <h1>New to the platform?</h1>
+
         <button
+          type="button"
           onClick={() => setIsLogin(false)}
-          className=" text-blue-500   hover:text-blue-700 hover:border-b-2 hover:border-blue-700"
+          className="text-blue-500 hover:border-b-2 hover:border-blue-700 hover:text-blue-700"
         >
           Sign Up
         </button>
