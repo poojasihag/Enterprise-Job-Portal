@@ -1,4 +1,3 @@
-// main logic of route
 import { prisma } from "../../config/prisma.ts";
 import * as usersRepository from "./users.repository.ts";
 import bcrypt from "bcrypt";
@@ -17,6 +16,7 @@ export const create = async (data: any) => {
   });
 
   return user;
+
 };
 export const login = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({
@@ -48,35 +48,35 @@ export const login = async (email: string, password: string) => {
 
 export const getAll = async () => {
 
-    // validation
+  // validation
 
-    // hash password
+  // hash password
 
-    // create user
+  // create user
 
-    return usersRepository.getAll();
+  return usersRepository.getAll();
 
 };
 export const update = async (data: any) => {
 
-    // validation
+  // validation
 
-    // hash password
+  // hash password
 
-    // create user
+  // create user
 
-    return usersRepository.update(data.id, data);
+  return usersRepository.update(data.id, data);
 
 };
 export const deleteUser = async (data: any) => {
 
-    // validation
+  // validation
 
-    // hash password
+  // hash password
 
-    // create user
+  // create user
 
-    return usersRepository.deleteUser(data.id);
+  return usersRepository.deleteUser(data.id);
 
 };
 

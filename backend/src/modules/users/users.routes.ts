@@ -4,7 +4,7 @@ import * as usersController from "./users.controller.ts";
 
 const router = Router();
 
-router.post("/create", usersController.create);
+router.post("/register", usersController.create);
 router.post("/login", usersController.login);
 router.get("/getAll", usersController.getAll);
 

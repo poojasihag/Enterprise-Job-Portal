@@ -1,5 +1,3 @@
-// handle router (req and res)
-
 import type { Request, Response } from "express";
 import * as usersService from "./users.service.ts";
 import { createUserSchema,   loginUserSchema } from "./users.validation.ts";
@@ -15,6 +13,7 @@ export const create = async (req: Request, res: Response) => {
     console.log(result.error.issues);
 
     return res.status(400).json({
+
       message: "Validation Failed",
       errors: result.error.issues,
     });

@@ -1,51 +1,44 @@
-import type { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import type { JwtPayload } from "jsonwebtoken";
+import type { NextFunction, Request, Response } from 'express'
+import { verifyToken } from '../utils/jwt.ts'
 
 declare global {
   namespace Express {
     interface Request {
-      user?: string | JwtPayload;
+      user: ReturnType<typeof verifyToken>
     }
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined");
-}
-
-export const authenticate = (
+export const authMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(401).json({
-      message: "Authorization token missing",
-    });
-  }
-
-  const token = authHeader.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({
-      message: "Invalid authorization format",
-    });
-  }
-
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const authHeader = req.headers.authorization
 
-    req.user = decoded;
+    if (!authHeader) {
+      return res.status(401).json({
+        message: 'Authentication required',
+      })
+    }
 
-    next();
+    const token = authHeader.split(' ')[1]
+
+    if (!token) {
+      return res.status(401).json({
+        message: 'Invalid token',
+      })
+    }
+
+    const decoded = verifyToken(token)
+
+    req.user = decoded
+
+    next()
   } catch (error) {
     return res.status(401).json({
-      message: "Invalid or expired token",
-    });
+      message: 'Invalid or expired token',
+    })
   }
-};
+}

@@ -1,156 +1,297 @@
-import { useForm, type SubmitHandler } from "react-hook-form";
-import { Eye } from "lucide-react";
-import { registerUser } from "../../lib/api/auth";
-import { useState } from "react";
 
-type Inputs = {
-  fullname: string;
-  email: string;
-  password: string;
-  role: "CANDIDATE" | "RECRUITER";
-};
+import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
+import { z } from 'zod'
+import { registerUser } from '../../lib/api/auth'
+import { useNavigate } from 'react-router-dom'
+
 type CreateProps = {
-  setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
-};
+  setIsLogin: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+const registerSchema = z.object({
+  fullname: z
+    .string()
+    .trim()
+    .min(1, 'Full name is required'),
+
+  email: z
+    .string()
+    .trim()
+    .email('Please enter a valid email'),
+
+  password: z
+    .string()
+    .min(6, 'Password must be at least 6 characters'),
+
+  role: z.enum(['CANDIDATE', 'RECRUITER']),
+})
+
+type FormData = z.infer<typeof registerSchema>
 
 export default function CreateAccountForm({ setIsLogin }: CreateProps) {
-  const [role, setRole] = useState<string>("Candidate");
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<Inputs>();
-  // const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data);
-  const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    try {
-      const response = await registerUser(data);
+  const navigate = useNavigate()
 
-      console.log(response.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  console.log(watch("fullname")); // watch input value by passing its name
-  function handleRole(role: string) {
-    setRole(role);
+  const [formData, setFormData] = useState<FormData>({
+    fullname: '',
+    email: '',
+    password: '',
+    role: 'CANDIDATE',
+  })
+
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof FormData, string>>
+  >({})
+
+  const [showPassword, setShowPassword] = useState(false)
+
+  const [loading, setLoading] = useState(false)
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+
+    //remove error when user starts correcting the field
+    setErrors((prev) => ({
+      ...prev,
+      [name]: '',
+    }))
   }
+
+  const handleRole = (role: 'CANDIDATE' | 'RECRUITER') => {
+    setFormData((prev) => ({
+      ...prev,
+      role,
+    }))
+
+    setErrors((prev) => ({
+      ...prev,
+      role: '',
+    }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    // validte form with zod
+    const result = registerSchema.safeParse(formData)
+
+    if (!result.success) {
+      const fieldErrors: Partial<Record<keyof FormData, string>> = {}
+
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0] as keyof FormData
+
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = issue.message
+        }
+      })
+
+      setErrors(fieldErrors)
+      return
+    }
+
+    try {
+      setLoading(true)
+      setErrors({})
+
+      console.log('FORM DATA:', result.data)
+
+      const response = await registerUser(result.data)
+
+      console.log('BACKEND RESPONSE:', response.data)
+
+      const { token, user } = response.data
+
+      localStorage.setItem('token', token)
+      if (!token || !user) {
+        throw new Error('Invalid registration response')
+      }
+
+      localStorage.setItem('token', token)
+      localStorage.setItem(
+        'user',
+        JSON.stringify(user)
+      )
+
+      if (user?.role === 'CANDIDATE') {
+        navigate('/candidate', {
+    replace: true,
+  })
+      } else if (user?.role === 'RECRUITER') {
+        navigate('/recruiter', {
+    replace: true,
+  })
+      }
+    } catch (error) {
+      console.error('REGISTER ERROR:', error)
+
+      setErrors({
+        email: 'Registration failed. Please try again.',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <form
-      className="my-10 flex flex-col h-70 w-full gap-7 items-center"
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit}
+      className="my-10 flex w-full flex-col items-center gap-7"
     >
-      {/* <div className="mb-5">
-  <label className="mb-2 block text-sm font-medium text-gray-700">
-    Role
-  </label>
-
-  <select
-    {...register("role", { required: "Role is required" })}
-    className="w-60 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm"
-  >
-    <option value="">Select Role</option>
-    <option value="CANDIDATE">Candidate</option>
-    <option value="RECRUITER">Recruiter</option>
-  </select>
-</div> */}
-      <div className="w-1/3 bg-gray-200 flex flex-col items-center justify-center">
-        <div
-          {...register("role", { required: "Role is required" })}
-          className="bg-blue-200 h-12 w-70 border-0 my-4 rounded-md flex flex-row items-center justify-center "
-        >
+      {/* Role */}
+      <div className="flex w-70 flex-col items-center justify-center">
+        <div className="flex h-12 w-70 flex-row items-center justify-center rounded-md bg-blue-200">
           <button
-            onClick={() => handleRole("Candidate")}
-            className={`text-black h-9 w-33 ${role === "Candidate" ? "bg-white" : "bg-blue-200"} border-0 rounded-md shadow-2xl`}
+            type="button"
+            onClick={() => handleRole('CANDIDATE')}
+            className={`h-9 w-33 rounded-md text-black ${formData.role === 'CANDIDATE'
+              ? 'bg-white shadow-2xl'
+              : 'bg-blue-200'
+              }`}
           >
             Candidate
           </button>
+
           <button
-            onClick={() => handleRole("Recruiter")}
-            className={`text-black h-9 w-33 ${role === "Recruiter" ? "bg-white" : "bg-blue-200"} border-0 rounded-md shadow-2xl`}
+            type="button"
+            onClick={() => handleRole('RECRUITER')}
+            className={`h-9 w-33 rounded-md text-black ${formData.role === 'RECRUITER'
+              ? 'bg-white shadow-2xl'
+              : 'bg-blue-200'
+              }`}
           >
             Recruiter
           </button>
         </div>
+
+        {errors.role && (
+          <span className="mt-1 text-sm text-red-600">
+            {errors.role}
+          </span>
+        )}
       </div>
-      <div className="">
+
+      {/* Full Name */}
+      <div>
         <label
-          htmlFor="text"
+          htmlFor="fullname"
           className="mb-2 block text-sm font-medium text-gray-700"
         >
           Full Name
         </label>
+
         <input
+          id="fullname"
+          name="fullname"
           type="text"
-          className="w-60 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-          // className="h-8 bg-white w-60  border-0 border-gray-400 shadow-2xl rounded-md"
-          {...register("fullname", { required: "Full name is required" })}
+          value={formData.fullname}
+          onChange={handleChange}
           placeholder="Full Name"
+          className="w-60 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
         />
+
+        {errors.fullname && (
+          <p className="mt-1 text-sm text-red-600">
+            {errors.fullname}
+          </p>
+        )}
       </div>
-      <div className="">
+
+      {/* Email */}
+      <div>
         <label
           htmlFor="email"
           className="mb-2 block text-sm font-medium text-gray-700"
         >
           Work Email
         </label>
+
         <input
+          id="email"
+          name="email"
           type="email"
-          className="w-60 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-          // className="h-8 bg-white w-60  border-0 border-gray-400 shadow-2xl rounded-md"
-          {...register("email", { required: "Email is required" })}
+          value={formData.email}
+          onChange={handleChange}
           placeholder="Email"
+          className="w-60 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
         />
+
+        {errors.email && (
+          <p className="mt-1 text-sm text-red-600">
+            {errors.email}
+          </p>
+        )}
       </div>
 
-      {/* include validation with required or other standard HTML validation rules */}
+      {/* Password */}
       <div className="mb-5">
-        <label className="mb-2 block text-sm font-medium text-gray-700">
+        <label
+          htmlFor="password"
+          className="mb-2 block text-sm font-medium text-gray-700"
+        >
           Security Password
         </label>
 
         <div className="relative">
           <input
-            type="password"
-            {...register("password", { required: "Password is required" })}
+            id="password"
+            name="password"
+            type={showPassword ? 'text' : 'password'}
+            value={formData.password}
+            onChange={handleChange}
             placeholder="••••••••"
-            className="w-60 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="w-60 rounded-xl border border-gray-300 bg-white px-4 py-3 pr-10 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
 
-          <Eye
-            size={18}
-            className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400"
-          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+          >
+            {showPassword ? (
+              <Eye size={18} />
+
+            ) : (
+              <EyeOff size={18} />
+            )}
+          </button>
         </div>
-      </div>
-      {/* errors will return when field validation fails  */}
-      {errors.fullname && (
-        <span className="text-sm text-red-600">{errors.fullname.message}</span>
-      )}
-      {errors.email && (
-        <span className="text-sm text-red-600">{errors.email.message}</span>
-      )}
-      {errors.password && (
-        <span className="text-sm text-red-600">{errors.password.message}</span>
-      )}
 
-      <input
-        // className="h-8 bg-blue-300 hover:bg-blue-400 w-60 border-0 border-gray-400 shadow-2xl rounded-md"
-        className="w-60 rounded-xl border border-gray-300 bg-blue-300 hover:bg-blue-400 px-4 py-3 text-sm  focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        {errors.password && (
+          <p className="mt-1 text-sm text-red-600">
+            {errors.password}
+          </p>
+        )}
+      </div>
+
+      {/* Submit */}
+      <button
         type="submit"
-        value="Create Account"
-      />
-      <div className="flex flex-row">
-        <h1>Already have an account?</h1>
+        disabled={loading}
+        className="w-60 rounded-xl border border-gray-300 bg-blue-300 px-4 py-3 text-sm hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {loading ? 'Creating Account...' : 'Create Account'}
+      </button>
+
+      {/* Login */}
+      <div className="flex flex-row gap-1">
+        <span>Already have an account?</span>
+
         <button
-         type="button"
+          type="button"
           onClick={() => setIsLogin(true)}
-          className=" text-blue-500   hover:text-blue-700 hover:border-b-2 hover:border-blue-700"
+          className="text-blue-500 hover:border-b-2 hover:border-blue-700 hover:text-blue-700"
         >
           Sign In
         </button>
       </div>
     </form>
-  );
+  )
 }

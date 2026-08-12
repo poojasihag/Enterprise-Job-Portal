@@ -1,6 +1,7 @@
 import { useState } from "react";
 import LoginForm from "../../components/auth/LoginForm";
 import CreateAccountForm from "../../components/auth/CreateAccountForm";
+// import Demoform from "../../components/auth/Demoform";
 
 export default function LoginPage() {
   // const [role, setRole] = useState<string>("Candidate");
@@ -12,6 +13,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-row ">
+      {/* <Demoform/> */}
       <div className="w-2/3 flex flex-col justify-between items-start p-8  bg-[#4d659c]">
         <h1 className="text-2xl text-white">Enterprise-Job-Portal</h1>
         <div className="text-white">
