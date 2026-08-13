@@ -121,11 +121,11 @@ export default function CreateAccountForm({ setIsLogin }: CreateProps) {
       )
 
       if (user?.role === 'CANDIDATE') {
-        navigate('/candidate', {
+        navigate('/candidate/dashboard', {
     replace: true,
   })
       } else if (user?.role === 'RECRUITER') {
-        navigate('/recruiter', {
+        navigate('/recruiter/dashboard', {
     replace: true,
   })
       }

@@ -114,11 +114,11 @@ export default function LoginForm({ setIsLogin }: LoginProps) {
         JSON.stringify(user)
       )
       if (user?.role === 'CANDIDATE') {
-        navigate('/candidate', {
+        navigate('/candidate/dashboard', {
           replace: true,
         })
       } else if (user?.role === 'RECRUITER') {
-        navigate('/recruiter', {
+        navigate('/recruiter/dashboard', {
           replace: true,
         })
       }
@@ -147,8 +147,8 @@ export default function LoginForm({ setIsLogin }: LoginProps) {
             type="button"
             onClick={() => handleRole('CANDIDATE')}
             className={`h-9 w-33 rounded-md text-black ${formData.role === 'CANDIDATE'
-                ? 'bg-white shadow-2xl'
-                : 'bg-blue-200'
+              ? 'bg-white shadow-2xl'
+              : 'bg-blue-200'
               }`}
           >
             Candidate
@@ -158,8 +158,8 @@ export default function LoginForm({ setIsLogin }: LoginProps) {
             type="button"
             onClick={() => handleRole('RECRUITER')}
             className={`h-9 w-33 rounded-md text-black ${formData.role === 'RECRUITER'
-                ? 'bg-white shadow-2xl'
-                : 'bg-blue-200'
+              ? 'bg-white shadow-2xl'
+              : 'bg-blue-200'
               }`}
           >
             Recruiter
