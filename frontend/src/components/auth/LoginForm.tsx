@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { z } from 'zod'
 import { loginApi } from '../../lib/api/auth'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 type LoginProps = {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>
@@ -25,6 +26,8 @@ type FormData = z.infer<typeof loginSchema>
 
 export default function LoginForm({ setIsLogin }: LoginProps) {
   const navigate = useNavigate()
+
+  const { login } = useAuth()
 
   const [formData, setFormData] = useState<FormData>({
     email: '',
@@ -101,18 +104,28 @@ export default function LoginForm({ setIsLogin }: LoginProps) {
 
       console.log('LOGIN SUCCESS:', response.data)
 
+      // const { token, user } = response.data
+
+      // localStorage.setItem('token', token)
+      // if (!token || !user) {
+      //   throw new Error('Invalid login response')
+      // }
+
+      // localStorage.setItem('token', token)
+      // localStorage.setItem(
+      //   'user',
+      //   JSON.stringify(user)
+      // )
+
       const { token, user } = response.data
 
-      localStorage.setItem('token', token)
       if (!token || !user) {
         throw new Error('Invalid login response')
       }
+      login(token, user)
+      // localStorage.setItem('token', token)
+      // localStorage.setItem('user', JSON.stringify(user))
 
-      localStorage.setItem('token', token)
-      localStorage.setItem(
-        'user',
-        JSON.stringify(user)
-      )
       if (user?.role === 'CANDIDATE') {
         navigate('/candidate/dashboard', {
           replace: true,

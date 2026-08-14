@@ -43,3 +43,15 @@ export const login = async (
     })
   }
 }
+
+export const getMe = async (
+  req: Request,
+  res: Response
+) => {
+  return res.status(200).json({
+    user: req.user,
+  })
+}
+
+// This controller receives HTTP requests from the frontend, passes the request data to your authentication service, and converts the service's result into an HTTP response that the frontend can understand.
+

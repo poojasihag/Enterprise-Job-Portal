@@ -1,6 +1,6 @@
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcrypt'//bcrypt is used for password hashing.You should never store passwords directly in your database
 import { findUserByEmail, createUser } from './auth.repository.ts'
-import { generateToken } from '../../utils/jwt.ts'
+import { generateToken } from '../../utils/jwt.ts'//This imports a function that creates a JWT (JSON Web Token).
 
 export const registerUser = async (data: {
     fullname: string
@@ -8,7 +8,7 @@ export const registerUser = async (data: {
     password: string
     role: 'CANDIDATE' | 'RECRUITER'
 }) => {
-    const existingUser = await findUserByEmail(data.email)
+    const existingUser = await findUserByEmail(data.email)//This asks the database:"Is there already a user with this email?"
 
     if (existingUser) {
         throw new Error('Email already exists')
@@ -23,6 +23,7 @@ export const registerUser = async (data: {
         role: data.role,
     })
 
+    // After creating the user, you generate a JWT.
     const token = generateToken({
         userId: String(user.id),
         role: user.role,
@@ -77,3 +78,11 @@ export const loginUser = async (data: {
         },
     }
 }
+
+// So, in very simple terms:
+
+// Register = check → hash password → save user → create token.
+
+// Login = find user → check password → create token.
+
+// And the reason you have this service file is to keep the authentication/business logic separate from your HTTP routes and database code, which makes the project easier to maintain as it grows.
